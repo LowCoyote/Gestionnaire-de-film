@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import {useMovieStore} from "../../store/movieStore";
+import {useMovieStore} from "../../store/MovieStore";
 import {useRoute} from "vue-router";
 import FormMovie from "../../components/FormMovie.vue";
 

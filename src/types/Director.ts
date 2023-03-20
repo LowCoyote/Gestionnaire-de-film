@@ -1,7 +1,7 @@
 export type Director = {
     id: number;
-    firstName: string;
-    lastName: string;
-    birthDate: string;
+    firstname: string;
+    lastname: string;
+    birthday: string;
     nationality: string;
 }

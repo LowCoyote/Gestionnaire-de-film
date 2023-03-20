@@ -18,8 +18,8 @@
             <MovieInfo title="Date de sortie" :information="movie.release"/>
             <MovieInfo title="Langue" :information="movie.language" />
             <MovieInfo title="Genre" :information="movie.genre"/>
-            <MovieInfo title="Réalisateur" :information="movie.director.firstName + ' ' + movie.director.lastName"/>
-            <MovieInfo title="Date de naissance" :information="movie.director.birthDate"/>
+            <MovieInfo title="Réalisateur" :information="movie.director.firstname + ' ' + movie.director.lastname"/>
+            <MovieInfo title="Date de naissance" :information="movie.director.birthday"/>
             <MovieInfo title="Nationalité" :information="movie.director.nationality"/>
           </dl>
         </div>
@@ -33,10 +33,11 @@
 </template>
 
 <script setup lang="ts">
-import { useMovieStore } from "../../store/movieStore";
+import { useMovieStore } from "../../store/MovieStore";
 import {useRoute} from "vue-router";
 import MovieInfo from "../../components/MovieInfo.vue";
-import router from "../../router/router";
+import router from "../../router/Router";
+import DateUtils from "../../utils/DateUtils";
 
 const movieStore = useMovieStore();
 const movie = movieStore.getMovie(parseInt(useRoute().params.id));

@@ -1,5 +1,5 @@
 <template>
-  <form class="flex flex-col w-[70%] mx-auto space-y-6" ref="form" @submit="onSubmit">
+  <form class="flex flex-col w-[70%] mx-auto space-y-6" ref="form" @submit="onSubmit($event)">
     <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
       <div class="md:grid md:grid-cols-3">
         <div class="md:col-span-1">
@@ -28,33 +28,6 @@
                 {{ genre.name }}
               </option>
             </select>
-          </div>
-          <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:border-t sm:border-gray-200 sm:pt-5">
-            <label for="Poster" class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">Poster</label>
-            <div class="mt-1 sm:col-span-2 sm:mt-0">
-              <div class="flex max-w-lg justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pt-5 pb-6">
-                <div v-if="!file" class="space-y-1 text-center">
-                  <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                  <div class="flex text-sm text-gray-600">
-                    <label for="file-upload" class="relative cursor-pointer rounded-md bg-white font-medium text-green-600">
-                      <span>Envoyer un fichier</span>
-                      <input id="file-upload" name="file-upload" @dragover="onFileChanged($event)" @change="onFileChanged($event)" type="file" class="sr-only" />
-                    </label>
-                    <p class="pl-1">ou drag and drop</p>
-                  </div>
-                </div>
-                <div v-else>
-                  <div class="cursor-pointer float-right" @click="fileReset()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                  <img :src="url" class="w-32 h-32"  alt="Uploaded image"/>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -89,12 +62,13 @@
               <label class="block text-sm font-medium text-gray-700">Nationalité</label>
               <input v-model="nationalite" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
             </div>
+
           </div>
         </div>
       </div>
     </div>
     <div class="flex justify-end">
-      <button type="button" class="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm">Annuler</button>
+      <button type="button" @click="$router.go(-1)" class="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm">Annuler</button>
       <button type="submit" class="ml-3 inline-flex justify-center rounded-md border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white shadow-sm">Enregistrez</button>
     </div>
   </form>
@@ -102,8 +76,12 @@
 
 <script setup lang="ts">
 import {ref} from "vue";
-import {useMovieStore} from "../store/movieStore";
-import {Movie} from "../types/movie";
+import {useMovieStore} from "../store/MovieStore";
+import {Movie} from "../types/Movie";
+import {getPosterByTitle} from "../services/OMdbService";
+import router from "../router/Router";
+import DateUtils from "../utils/DateUtils";
+import {useRoute} from "vue-router";
 
 const genres = [
   { id: 1, name: 'Comédie' },
@@ -123,57 +101,69 @@ const nom = ref('')
 const dateNaissance = ref('')
 const nationalite = ref('')
 const form = ref()
-const file = ref<File | null>();
-const url: any = ref(null);
+const idMovie = useRoute().params.id;
 
 if(props.movie) {
   titre.value = props.movie.title
-  dateSortie.value = props.movie.release
+  dateSortie.value = DateUtils.getUnformattedDate(props.movie.release)
   langue.value = props.movie.language
   genre.value = props.movie.genre
-  prenom.value = props.movie.director.firstName
-  nom.value = props.movie.director.lastName
-  dateNaissance.value = props.movie.director.birthDate
+  prenom.value = props.movie.director.firstname
+  nom.value = props.movie.director.lastname
+  dateNaissance.value = DateUtils.getUnformattedDate(props.movie.director.birthday)
   nationalite.value = props.movie.director.nationality
 }
 
-const onSubmit = () => {
-  form.value.reset()
+const onSubmit = async (event: Event) => {
+  event.preventDefault()
+
+  const titlePosterOnApi = async () => {
+    let poster;
+    await getPosterByTitle(titre.value, dateSortie.value).then(
+        value => (poster = value)
+    )
+    if(poster === undefined){
+      return 'https://www.picsum.photos/200/300'
+    }else{
+      return poster
+    }
+  }
+
   if(!props.movie){
     useMovieStore().addMovie({
       id: useMovieStore().getLastId() + 1,
       title: titre.value,
-      release: dateSortie.value,
+      release: DateUtils.getFormattedDate(dateSortie.value),
       language: langue.value,
       genre: genre.value,
-      poster: "https://picsum.photos/200/300",
+      poster: await titlePosterOnApi(),
       director: {
         id: useMovieStore().getLastId() + 1,
-        firstName: prenom.value,
-        lastName: nom.value,
-        birthDate: dateNaissance.value,
+        firstname: prenom.value,
+        lastname: nom.value,
+        birthday: DateUtils.getFormattedDate(dateNaissance.value),
         nationality: nationalite.value
       }
     })
-
-    if(file.value) {
-
-    }
   }else{
-    // useMovieStore().updateMovie()
+    const movie: Movie = {
+      id: props.movie.id,
+      title: titre.value,
+      release: DateUtils.getFormattedDate(dateSortie.value),
+      language: langue.value,
+      genre: genre.value,
+      poster: await titlePosterOnApi(),
+      director: {
+        id: props.movie.director.id,
+        firstname: prenom.value,
+        lastname: nom.value,
+        birthday: DateUtils.getFormattedDate(dateNaissance.value),
+        nationality: nationalite.value
+      }
+    }
+    useMovieStore().updateMovie(parseInt(idMovie), movie)
   }
 
-}
-
-function onFileChanged($event: Event) {
-  const target = $event.target as HTMLInputElement;
-  if (target && target.files) {
-    file.value = target.files[0];
-    url.value = URL.createObjectURL(target.files[0]);
-  }
-}
-
-function fileReset() {
-  file.value = null;
+  await router.push({name: 'home'})
 }
 </script>

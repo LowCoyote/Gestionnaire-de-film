@@ -1,4 +1,4 @@
-import {Director} from "./director";
+import {Director} from "./Director";
 
 export interface Movie {
     id: number;
