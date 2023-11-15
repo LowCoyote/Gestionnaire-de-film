@@ -1,9 +1,9 @@
 ## L'api
 ___
 
-J'utilise postgreSQL pour la base de donnée en localhost
+J'utilise postgreSQL pour la base de données en localhost
 <br>
-### Faite ces commandes dans l'ordre pour que l'api ce lance
+### Faites ces commandes dans l'ordre pour que le front se lance
 ````cd api````
 
 ````npm install````
@@ -14,7 +14,7 @@ J'utilise postgreSQL pour la base de donnée en localhost
 ___ 
 J'ai fait du vuejs 3 avec Pinia pour gérer les films et axios pour les requêtes.
 <br>
-### Faite ces commandes dans l'ordre pour que le front ce lance
+### Faites ces commandes dans l'ordre pour que le front se lance
 
 ```cd front```
 
